@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
                             SocketHandler.setSocket(clientSocket);
                             Message message = mHandler.obtainMessage();
                             message.sendToTarget();
-                            Intent intent = new Intent(getApplicationContext(), ClientActivity.class);
+                            Intent intent = new Intent(getApplicationContext(), ChooserActivity.class);
                             startActivity(intent);
 
                         } catch (IOException i) {

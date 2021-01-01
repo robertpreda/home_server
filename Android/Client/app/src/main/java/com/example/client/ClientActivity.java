@@ -17,7 +17,7 @@ import java.net.Socket;
 public class ClientActivity extends AppCompatActivity {
     private Socket socket;
     private EditText query;
-    private Button search;
+    private Button search, play, pause;
     private DataOutputStream out;
     private Handler mHandler;
 
@@ -29,6 +29,60 @@ public class ClientActivity extends AppCompatActivity {
         this.socket = SocketHandler.getSocket();
         this.query = findViewById(R.id.searchText);
         this.search = findViewById(R.id.searchButton);
+        this.pause = findViewById(R.id.bPause);
+        this.play = findViewById(R.id.bPlay);
+
+        this.pause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String text = "PAUSE";
+                        sendText(socket, text);
+                    }
+                });
+                thread.start();
+            }
+        });
+        this.play.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String text = "PLAY";
+                        sendText(socket, text);
+                    }
+                });
+                thread.start();
+            }
+        });
+    }
+
+    private void sendText(Socket socket, String text){
+        try {
+            if(out == null)
+                out = new DataOutputStream(socket.getOutputStream());
+            int textLength = text.length();
+            String textLengthStr = Integer.toString(textLength);
+            int toPad = SocketHandler.getHeader() - textLength;
+            textLengthStr = padRight(textLengthStr, toPad);
+            out.write(textLengthStr.getBytes("UTF-8"));
+            out.write(text.getBytes("UTF-8"));
+
+        } catch (IOException i) {
+            try{
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(), "Request sent", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
     }
 
     public void sendRequest(View view) {
@@ -76,14 +130,7 @@ public class ClientActivity extends AppCompatActivity {
                 public void run() {
                     try {
                         String text = "bye";
-                        int msgLen = text.length();
-                        String msgLenStr = Integer.toString(msgLen);
-                        int toPad = SocketHandler.getHeader() - msgLen;
-                        msgLenStr = padLeft(msgLenStr, toPad);
-                        if (out == null)
-                            out = new DataOutputStream(socket.getOutputStream());
-                        out.write(msgLenStr.getBytes("UTF-8"));
-                        out.write(text.getBytes("UTF-8"));
+                        sendText(socket, text);
                         out.close();
 
                         Intent i = new Intent(getApplicationContext(), MainActivity.class);
